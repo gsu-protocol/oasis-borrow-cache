@@ -1,5 +1,4 @@
 import { config as mainConfig } from './config.mainnet';
-import { config as kovanConfig } from './config.kovan';
 import { config as localConfig } from './config.localnet';
 import { config as goerliConfig } from './config.goerli';
 import { MessageNames, MessageTypes, sendMessage } from './utils/awsQueue';
@@ -10,8 +9,6 @@ const config = (() => {
       return mainConfig;
     case 'localnet':
       return localConfig;
-    case 'kovan':
-      return kovanConfig;
     case 'goerli':
       return goerliConfig;
     default:

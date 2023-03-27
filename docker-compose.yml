@@ -1,13 +1,55 @@
 version: "3.2"
 services:
-  postgres:
+  # Building Image
+  gsucoin-cache:
+    build: .
+    image: gsucoin-cache
+
+  # Setting up DB
+  db:
     image: postgres:10.6
-    container_name: postgres-vulcan2x
+    container_name: gsucoin-cache-db
     environment:
       - POSTGRES_USER=user
-      - POSTGRES_PASSWORD=password
-      - POSTGRES_HOST=localhost
+      - POSTGRES_PASSWORD=pass
+      - POSTGRES_HOST=gsu_cache-network
       - POSTGRES_PORT=5432
-      - POSTGRES_DB=database
+      - POSTGRES_DB=db
+    volumes:
+      - /data/volumes/gsucoin-db:/var/lib/postgresql/data
+    networks:
+      - gsucoin-cache-network
+    restart: unless-stopped
+
+  # Setting up ETL service
+  etl:
+    container_name: gsucoin-cache-etl
+    image: gsucoin-cache
+    env_file:
+      - .env
+    restart: unless-stopped
+    command: bash -c "yarn migrate && yarn start-etl"
+    networks:
+      - gsucoin-cache-network
+    depends_on:
+      - db
+
+  # Setting up API service
+  api:
+    container_name: gsucoin-cache-api
+    image: gsucoin-cache
+    command: bash -c "yarn start-api"
     ports:
-      - "5432:5432"
+      - "3001:3001"
+    env_file:
+      - .env
+    restart: unless-stopped
+    networks:
+    - gsucoin-cache-network
+    depends_on:
+      - db
+
+networks:
+  gsucoin-cache-network:
+    name: gsucoin-cache-network
+    driver: bridge

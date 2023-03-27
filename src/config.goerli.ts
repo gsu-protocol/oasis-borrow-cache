@@ -40,53 +40,28 @@ import {
   eventEnhancerTransformer,
   eventEnhancerTransformerEthPrice,
 } from './borrow/transformers/eventEnhancer';
-import {
-  automationBotTransformer,
-  automationBotV2Transformer,
-} from './borrow/transformers/automationBotTransformer';
-import {
-  automationBotExecutedTransformerV1,
-  automationBotExecutedTransformerV2,
-} from './borrow/transformers/automationBotExecutedTransformer';
-import { automationAggregatorBotTransformer } from './borrow/transformers/automationAggregatorBotTransformer';
-import { dsProxyTransformer } from './borrow/transformers/dsProxyTransformer';
-import { initializeCommandAliases, partialABI } from './utils';
 import { multiplyTransformer } from './borrow/transformers/multiply';
 import { getIlkForCdp } from './borrow/dependencies/getIlkForCdp';
 import { getLiquidationRatio } from './borrow/dependencies/getLiquidationRatio';
 import { exchangeTransformer } from './borrow/transformers/exchange';
 import { multiplyHistoryTransformer } from './borrow/transformers/multiplyHistoryTransformer';
-import { redeemerTransformer } from './borrow/transformers/referralRedeemer';
-import { aaveLendingPoolTransformer } from './borrow/transformers/aaveTransformer';
-import { lidoTransformer } from './borrow/transformers/lidoTransformer';
-import {
-  automationEventEnhancerGasPriceV1,
-  automationEventEnhancerGasPriceV2,
-  automationEventEnhancerTransformerEthPriceV1,
-  automationEventEnhancerTransformerEthPriceV2,
-} from './borrow/transformers/automationEventEnhancer';
-import { aavev3LendingPoolTransformer } from './borrow/transformers/aavev3Transformer';
 
-const AutomationBotABI = require('../abis/automation-bot.json');
 
 const goerliAddresses = require('./addresses/goerli.json');
 
+const PLACEHOLDER_BLOCK = Number(process.env.GENESIS);
+
 const GOERLI_STARTING_BLOCKS = {
-  GENESIS: Number(process.env.GENESIS) || 5273074,
-  CDP_MANAGER: 5273301,
-  MCD_CAT: 5273080,
-  MCD_DOG: 5273080,
-  AUTOMATION_BOT: 6707333,
-  AUTOMATION_BOT_V2: 7962787,
-  AUTOMATION_AGGREGATOR_BOT: 7368154,
-  MULTIPLY_PROXY_ACTIONS: 6187206,
+  GENESIS: Number(process.env.GENESIS) || 7886137,
+  CDP_MANAGER: PLACEHOLDER_BLOCK,
+  MCD_CAT: PLACEHOLDER_BLOCK,
+  MCD_DOG: PLACEHOLDER_BLOCK,
+  AUTOMATION_BOT: PLACEHOLDER_BLOCK,
 };
 
 const OASIS_CONTRACTS = {
-  MULTIPLY_V1: '0x24E54706B100e2061Ed67fAe6894791ec421B421',
-  MULTIPLY_V2: '0xc9628adc0a9f95D1d912C5C19aaBFF85E420a853',
-  EXCHANGE_V1: '0x1F55deAeE5e878e45dcafb9A620b383C84e4005a',
-  EXCHANGE_V2: '0x2b0b4c5c58fe3CF8863c4948887099A09b84A69c',
+  MULTIPLY_V2: goerliAddresses.MULTIPLY_PROXY_ACTIONS,
+  EXCHANGE_V2: goerliAddresses.EXCHANGE,
 };
 
 const vat = {
@@ -105,21 +80,6 @@ const cats = [
   {
     address: goerliAddresses.MCD_CAT,
     startingBlock: GOERLI_STARTING_BLOCKS.MCD_CAT,
-  },
-];
-
-const redeemer = [
-  {
-    address: '0x5C9141C77F9c04f171f62B6fdFf5E4462e9FD83A',
-    startingBlock: 6893402,
-  },
-  {
-    address: '0x0A0647e629A0825353B76dEeC232b29df960ac2d',
-    startingBlock: 6991463,
-  },
-  {
-    address: '0x23440aC6c8a10EA89132da74B705CBc6D99a805b',
-    startingBlock: 7224992,
   },
 ];
 
@@ -172,117 +132,26 @@ const flipperNotes: AbiInfo[] = [
   },
 ];
 
-const automationBot = {
-  address: goerliAddresses.AUTOMATION_BOT,
-  startingBlock: GOERLI_STARTING_BLOCKS.AUTOMATION_BOT,
-};
-
-const automationBotV2 = {
-  address: goerliAddresses.AUTOMATION_BOT_V2,
-  startingBlock: GOERLI_STARTING_BLOCKS.AUTOMATION_BOT_V2,
-};
-
-const automationAggregatorBot = {
-  address: goerliAddresses.AUTOMATION_AGGREGATOR_BOT,
-  startingBlock: GOERLI_STARTING_BLOCKS.AUTOMATION_AGGREGATOR_BOT,
-};
-
-const commandMapping = [
-  {
-    command_address: '0x31285A87fB70a62b5AaA43199e53221c197E1e3f',
-    kind: 'stop-loss',
-  },
-  {
-    command_address: '0x7c86781A95b7E55E6C2F7297Ae6773e1dbcEAb13',
-    kind: 'basic-buy',
-  },
-  {
-    command_address: '0xe3ae7218d8e4a482e212ef1cbf2fcd0fb9882cc7',
-    kind: 'basic-buy',
-  },
-  {
-    command_address: '0x98b2b67795171380a4bfb5B8cD2F59aEA768b3ED',
-    kind: 'basic-buy',
-  },
-  {
-    command_address: '0x2003dC19056bA986B7d10AB4704897d685DD62D9',
-    kind: 'basic-buy',
-  },
-  {
-    command_address: '0xf19ae4c34e0e0dB13D074876A12339e86DC12f06',
-    kind: 'basic-buy',
-  },
-  {
-    command_address: '0xd4f94e013c7F47B989Ea79C6527E065C027794c7',
-    kind: 'basic-sell',
-  },
-  {
-    command_address: '0x6f878d8eb84e48da49900a6392b8f9ed262a50d7',
-    kind: 'basic-sell',
-  },
-  {
-    command_address: '0x3da3e38bBe1100DE5247617b4554115C0e452416',
-    kind: 'basic-sell',
-  },
-  {
-    command_address: '0xB52B1c61c667d570FF62745b19A0c58011A4b32C',
-    kind: 'basic-sell',
-  },
-  {
-    command_address: '0x2eCC5086CE10194175607d0D082fC27c3416693d',
-    kind: 'basic-sell',
-  },
-  {
-    command_address: '0x940a17668197f71DcAefD77Bf8c43c001c77f5AC',
-    kind: 'basic-sell',
-  },
-  {
-    command_address: '0x02B7391cdd0c8A75ecFC278d387e3DCC3d796340',
-    kind: 'auto-take-profit',
-  },
-  {
-    command_address: '0xe78acea26b79564c4d29d8c1f5bad3d4e0414676',
-    kind: 'aave-stop-loss',
-  },
-].map(({ command_address, kind }) => ({ command_address: command_address.toLowerCase(), kind }));
 
 const multiply = [
   {
-    address: OASIS_CONTRACTS.MULTIPLY_V1,
-    startingBlock: 6187206,
-  },
-  {
     address: OASIS_CONTRACTS.MULTIPLY_V2,
-    startingBlock: 6465516,
+    startingBlock: PLACEHOLDER_BLOCK,
   },
 ];
 
 const exchange = [
   {
-    address: OASIS_CONTRACTS.EXCHANGE_V1,
-    startingBlock: 6465517,
-  },
-  {
     address: OASIS_CONTRACTS.EXCHANGE_V2,
-    startingBlock: 7101342,
+    startingBlock: 13140368,
   },
 ];
 
-const dsProxy = [
-  {
-    name: 'automation-bot',
-    abi: partialABI(AutomationBotABI, [
-      { name: 'ApprovalGranted', type: 'event' },
-      { name: 'ApprovalRemoved', type: 'event' },
-    ]),
-    startingBlock: GOERLI_STARTING_BLOCKS.AUTOMATION_BOT,
-  },
-];
 
 const addresses = {
   ...goerliAddresses,
   MIGRATION: '',
-  ILK_REGISTRY: '0x525FaC4CEc48a4eF2FBb0A72355B6255f8D5f79e',
+  ILK_REGISTRY: goerliAddresses.ILK_REGISTRY,
 };
 
 const oracles = getOraclesAddresses(goerliAddresses).map(description => ({
@@ -292,43 +161,15 @@ const oracles = getOraclesAddresses(goerliAddresses).map(description => ({
 
 const oraclesTransformers = oracles.map(getOracleTransformerName);
 
-const aaveLendingPool = [
-  {
-    address: '0x368EedF3f56ad10b9bC57eed4Dac65B26Bb667f6',
-    startingBlock: 7138747,
-  },
-];
-
-const aavev3Pool = [
-  {
-    address: '0x7b5C526B7F8dfdff278b4a3e045083FBA4028790',
-    startingBlock: 8300001
-  }
-];
-
-const lido = [
-  {
-    address: '0x24d8451bc07e7af4ba94f69acdd9ad3c6579d9fb',
-    startingBlock: 4533286,
-  },
-];
-
 export const config: UserProvidedSpockConfig = {
   startingBlock: GOERLI_STARTING_BLOCKS.GENESIS,
   extractors: [
     ...makeRawLogExtractors(cdpManagers),
     ...makeRawLogExtractors(cats),
-    ...makeRawLogExtractors(redeemer),
     ...makeRawLogExtractors(dogs),
     ...makeRawLogExtractors([vat]),
-    ...makeRawLogExtractors([automationBot]),
-    ...makeRawLogExtractors([automationBotV2]),
-    ...makeRawLogExtractors([automationAggregatorBot]),
     ...makeRawLogExtractors(multiply),
     ...makeRawLogExtractors(exchange),
-    ...makeRawLogExtractors(aaveLendingPool),
-    ...makeRawLogExtractors(aavev3Pool),
-    ...makeRawLogExtractors(lido),
     ...makeRawEventBasedOnTopicExtractor(flipper),
     ...makeRawEventBasedOnDSNoteTopic(flipperNotes),
     ...makeRawEventExtractorBasedOnTopicIgnoreConflicts(
@@ -339,7 +180,6 @@ export const config: UserProvidedSpockConfig = {
       oracle,
       dogs.map(dog => dog.address.toLowerCase()),
     ),
-    ...makeRawEventExtractorBasedOnTopicIgnoreConflicts(dsProxy, [goerliAddresses.AUTOMATION_BOT]),
   ],
   transformers: [
     ...openCdpTransformer(cdpManagers, { getUrnForCdp }),
@@ -354,11 +194,6 @@ export const config: UserProvidedSpockConfig = {
     vatRawMoveTransformer(vat),
     flipTransformer(),
     flipNoteTransformer(),
-    automationBotTransformer(automationBot, multiply),
-    automationBotV2Transformer(automationBotV2, multiply),
-    automationBotExecutedTransformerV1(automationBot,{ automationBot, automationAggregatorBot }),
-    automationBotExecutedTransformerV2(automationBotV2,{  automationBotV2 }),
-    automationAggregatorBotTransformer(automationAggregatorBot, { automationBot }),
     clipperTransformer(dogs.map(dep => getDogTransformerName(dep.address))),
     ...multiplyTransformer(multiply, {
       cdpManager: cdpManagers[0].address,
@@ -370,21 +205,12 @@ export const config: UserProvidedSpockConfig = {
     ...oraclesTransformer(oracles),
     eventEnhancerTransformer(vat, dogs[0], cdpManagers, oraclesTransformers),
     eventEnhancerTransformerEthPrice(vat, dogs[0], cdpManagers, oraclesTransformers),
-    ...dsProxyTransformer(),
     multiplyHistoryTransformer(vat.address, {
       dogs,
       multiplyProxyActionsAddress: [...multiply],
       exchangeAddress: [...exchange],
     }),
-    eventEnhancerGasPrice(vat, cdpManagers),
-    automationEventEnhancerGasPriceV1(automationBot),
-    automationEventEnhancerTransformerEthPriceV1(automationBot, oraclesTransformers),
-    automationEventEnhancerGasPriceV2(automationBotV2),
-    automationEventEnhancerTransformerEthPriceV2(automationBotV2, oraclesTransformers),
-    ...redeemerTransformer(redeemer),
-    ...aaveLendingPoolTransformer(aaveLendingPool),
-    ...aavev3LendingPoolTransformer(aavev3Pool),
-    ...lidoTransformer(lido),
+    eventEnhancerGasPrice(vat, cdpManagers)
   ],
   migrations: {
     borrow: join(__dirname, './borrow/migrations'),
@@ -397,6 +223,6 @@ export const config: UserProvidedSpockConfig = {
   },
   addresses,
   onStart: async services => {
-    await initializeCommandAliases(services, commandMapping);
+    // await initializeCommandAliases(services, commandMapping);
   },
 };
